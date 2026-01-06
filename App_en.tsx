@@ -16,13 +16,14 @@ const formatCurrency = (value: number) => {
     return `SAR ${value.toLocaleString('en-US')}`;
 };
 
+// Optimized for mobile: tighter movement, faster spring
 const cardVariants = {
-    hidden: { opacity: 0, y: 40, scale: 0.98 },
+    hidden: { opacity: 0, y: 20, scale: 0.99 },
     visible: { 
         opacity: 1, 
         y: 0, 
         scale: 1,
-        transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } 
+        transition: { duration: 0.5, ease: [0.25, 1, 0.5, 1] } 
     }
 };
 
@@ -38,7 +39,7 @@ const BentoCard: React.FC<{
         variants={cardVariants}
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true, margin: "-10%" }}
+        viewport={{ once: true, margin: "-50px" }} // Triggers sooner on mobile
         className={`
             relative overflow-hidden rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-10 flex flex-col group
             ${dark ? 'bg-[#1D1D1F] text-white shadow-2xl border border-white/10' : 'bg-white text-[#1D1D1F] shadow-2xl shadow-gray-200/50 border border-white/60'}
@@ -110,9 +111,9 @@ const App_en: React.FC<{ onToggleLanguage: () => void }> = ({ onToggleLanguage }
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 sm:mb-12 px-2 sm:px-4">
             <div className="mb-6 md:mb-0">
                 <motion.h1 
-                    initial={{ opacity: 0, y: 30 }}
+                    initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8, ease: "easeOut" }}
+                    transition={{ duration: 0.6, ease: "easeOut" }}
                     className="text-5xl sm:text-6xl md:text-8xl font-semibold tracking-tighter text-[#1D1D1F] mb-3 sm:mb-4"
                 >
                     December <span className="text-gray-300 block sm:inline">Review</span>
@@ -120,7 +121,7 @@ const App_en: React.FC<{ onToggleLanguage: () => void }> = ({ onToggleLanguage }
                 <motion.p 
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3, duration: 0.8 }}
+                    transition={{ delay: 0.1, duration: 0.6 }}
                     className="text-lg sm:text-2xl text-gray-500 font-medium"
                 >
                     {period.en}
@@ -130,7 +131,7 @@ const App_en: React.FC<{ onToggleLanguage: () => void }> = ({ onToggleLanguage }
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 whileTap={{ scale: 0.95 }}
-                transition={{ delay: 0.4 }}
+                transition={{ delay: 0.2 }}
                 onClick={() => setShowFormulas(true)}
                 className="flex items-center gap-2 px-5 py-2.5 sm:px-6 sm:py-3 bg-white rounded-full shadow-sm text-sm font-semibold text-[#1D1D1F] hover:bg-gray-50 transition-all border border-gray-200"
             >
@@ -198,7 +199,7 @@ const App_en: React.FC<{ onToggleLanguage: () => void }> = ({ onToggleLanguage }
                                 stroke="#34C759" strokeWidth="12%" fill="none" 
                                 initial={{ pathLength: 0 }}
                                 whileInView={{ pathLength: Math.min(financials.roi, 150) / 150 }}
-                                transition={{ duration: 1.5, ease: "easeOut" }}
+                                transition={{ duration: 1.0, ease: "easeOut" }}
                                 strokeLinecap="round"
                             />
                         </svg>
@@ -251,7 +252,7 @@ const App_en: React.FC<{ onToggleLanguage: () => void }> = ({ onToggleLanguage }
                                 tick={{ fontSize: 13, fontWeight: 600, fill: '#9CA3AF' }} 
                             />
                             <RechartsTooltip content={<CustomTooltip />} cursor={{fill: 'transparent'}} />
-                            <Bar dataKey="value" radius={[0, 12, 12, 0]} animationDuration={1500}>
+                            <Bar dataKey="value" radius={[0, 12, 12, 0]} animationDuration={800}>
                                 {performanceData.map((entry, index) => (
                                     <Cell key={`cell-${index}`} fill={index === 0 ? "url(#spendGradientDark)" : "url(#revGradientDark)"} />
                                 ))}
@@ -300,7 +301,7 @@ const App_en: React.FC<{ onToggleLanguage: () => void }> = ({ onToggleLanguage }
                                 cursor={{ fill: 'rgba(255,255,255,0.05)', radius: 12 }}
                                 content={<CustomTooltip />}
                             />
-                            <Bar dataKey="value" fill="url(#branchBarGradientDark)" radius={[6, 6, 6, 6]} barSize={32} animationDuration={1500} />
+                            <Bar dataKey="value" fill="url(#branchBarGradientDark)" radius={[6, 6, 6, 6]} barSize={32} animationDuration={800} />
                          </BarChart>
                     </ResponsiveContainer>
                 </div>
@@ -325,6 +326,7 @@ const App_en: React.FC<{ onToggleLanguage: () => void }> = ({ onToggleLanguage }
                                     dataKey="value"
                                     stroke="#1D1D1F"
                                     strokeWidth={4}
+                                    animationDuration={800}
                                 >
                                     {darkSpendBreakdown.map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={entry.color} />
