@@ -31,7 +31,7 @@ const BentoCard: React.FC<{
         viewport={{ once: true, margin: "-50px" }}
         className={`
             relative overflow-hidden rounded-[2.5rem] p-8 sm:p-10 flex flex-col
-            ${dark ? 'bg-[#1D1D1F] text-white shadow-2xl' : 'bg-white text-[#1D1D1F] shadow-xl shadow-gray-100/50 border border-gray-100'}
+            ${dark ? 'bg-[#1D1D1F] text-white shadow-2xl border border-white/10' : 'bg-white text-[#1D1D1F] shadow-xl shadow-gray-100/50 border border-gray-100'}
             ${className}
         `}
     >
@@ -54,6 +54,20 @@ const Pill: React.FC<{ text: string; color?: string }> = ({ text, color = "bg-gr
     </span>
 );
 
+const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+        return (
+            <div className="bg-[#1D1D1F]/80 backdrop-blur-xl border border-white/10 p-4 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.5)]">
+                <p className="font-semibold text-xs text-gray-400 mb-1 uppercase tracking-wide">{label}</p>
+                <p className="text-2xl font-bold text-white tracking-tight">
+                    {formatCurrency(payload[0].value)}
+                </p>
+            </div>
+        );
+    }
+    return null;
+};
+
 // --- Main Application ---
 
 const App_en: React.FC<{ onToggleLanguage: () => void }> = ({ onToggleLanguage }) => {
@@ -62,9 +76,15 @@ const App_en: React.FC<{ onToggleLanguage: () => void }> = ({ onToggleLanguage }
 
   // Chart Logic
   const performanceData = [
-    { name: 'Media Spend', value: financials.adSpend, fill: '#E5E5EA' },
-    { name: 'Attributed Rev', value: financials.revenueAttributedToAds, fill: '#4A2C5A' },
+    { name: 'Media Spend', value: financials.adSpend },
+    { name: 'Attributed Rev', value: financials.revenueAttributedToAds },
   ];
+  
+  // Adjust TikTok color for dark mode visibility
+  const darkSpendBreakdown = spendBreakdown.map(item => ({
+      ...item,
+      color: item.name_en.includes('TikTok') ? '#FFFFFF' : item.color
+  }));
 
   return (
     <div className="min-h-screen pb-32 selection:bg-[#4A2C5A] selection:text-white bg-[#F5F5F7]">
@@ -102,7 +122,7 @@ const App_en: React.FC<{ onToggleLanguage: () => void }> = ({ onToggleLanguage }
             </motion.button>
         </div>
 
-        {/* Vertical Stack Layout (One Section at a Time) */}
+        {/* Vertical Stack Layout */}
         <div className="flex flex-col gap-10">
             
             {/* 1. Hero Revenue Card */}
@@ -179,10 +199,24 @@ const App_en: React.FC<{ onToggleLanguage: () => void }> = ({ onToggleLanguage }
             </BentoCard>
 
             {/* 3. Spend Efficiency */}
-            <BentoCard title="Spend Efficiency" className="min-h-[450px]">
-                <div className="w-full h-[300px] mt-8">
+            <BentoCard dark title="Spend Efficiency" className="min-h-[500px]">
+                {/* Background Mesh */}
+                <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-purple-500/10 blur-[90px] -ml-20 -mt-20 pointer-events-none rounded-full"></div>
+                <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-blue-500/10 blur-[90px] -mr-20 -mb-20 pointer-events-none rounded-full"></div>
+
+                <div className="relative z-10 w-full h-[350px] mt-8">
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart layout="vertical" data={performanceData} margin={{ left: 0, right: 20 }} barSize={48}>
+                        <BarChart layout="vertical" data={performanceData} margin={{ left: 0, right: 20 }} barSize={50}>
+                            <defs>
+                                <linearGradient id="spendGradientDark" x1="0" y1="0" x2="1" y2="0">
+                                    <stop offset="0%" stopColor="#4B5563" />
+                                    <stop offset="100%" stopColor="#9CA3AF" />
+                                </linearGradient>
+                                <linearGradient id="revGradientDark" x1="0" y1="0" x2="1" y2="0">
+                                    <stop offset="0%" stopColor="#7C3AED" />
+                                    <stop offset="100%" stopColor="#C084FC" />
+                                </linearGradient>
+                            </defs>
                             <XAxis type="number" hide />
                             <YAxis 
                                 dataKey="name" 
@@ -190,104 +224,111 @@ const App_en: React.FC<{ onToggleLanguage: () => void }> = ({ onToggleLanguage }
                                 axisLine={false} 
                                 tickLine={false} 
                                 width={140} 
-                                tick={{ fontSize: 15, fontWeight: 600, fill: '#86868b' }} 
+                                tick={{ fontSize: 14, fontWeight: 600, fill: '#9CA3AF' }} 
                             />
-                            <RechartsTooltip 
-                                cursor={{ fill: 'transparent' }}
-                                contentStyle={{ borderRadius: '16px', border: 'none', background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(20px)', boxShadow: '0 20px 40px rgba(0,0,0,0.1)', padding: '12px 20px' }}
-                            />
-                            <Bar dataKey="value" radius={[0, 12, 12, 0]} animationDuration={1500}>
+                            <RechartsTooltip content={<CustomTooltip />} cursor={{fill: 'transparent'}} />
+                            <Bar dataKey="value" radius={[0, 16, 16, 0]} animationDuration={1500}>
                                 {performanceData.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                                    <Cell key={`cell-${index}`} fill={index === 0 ? "url(#spendGradientDark)" : "url(#revGradientDark)"} />
                                 ))}
                             </Bar>
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
-                <div className="mt-8 flex justify-around items-center px-4 border-t border-gray-100 pt-8">
+                <div className="relative z-10 flex justify-around items-center px-4 border-t border-white/10 pt-8">
                     <div className="text-center">
                          <div className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">Ad Spend</div>
-                         <div className="text-3xl font-bold text-[#1D1D1F]">{formatCurrency(financials.adSpend)}</div>
+                         <div className="text-3xl font-bold text-white tracking-tight">{formatCurrency(financials.adSpend)}</div>
                     </div>
-                    <div className="w-[1px] h-12 bg-gray-100"></div>
+                    <div className="w-[1px] h-12 bg-white/10"></div>
                     <div className="text-center">
                          <div className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">Revenue (Ads)</div>
-                         <div className="text-3xl font-bold text-[#4A2C5A]">{formatCurrency(financials.revenueAttributedToAds)}</div>
+                         <div className="text-3xl font-bold text-[#C084FC] tracking-tight">{formatCurrency(financials.revenueAttributedToAds)}</div>
                     </div>
                 </div>
             </BentoCard>
 
             {/* 4. Branch Performance */}
-            <BentoCard title="Branch Revenue" className="min-h-[450px]">
-                <div className="w-full h-[350px] mt-6">
+            <BentoCard dark title="Branch Revenue" className="min-h-[500px]">
+                {/* Background Mesh */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-sky-500/10 blur-[100px] pointer-events-none rounded-full"></div>
+
+                <div className="relative z-10 w-full h-[400px] mt-6">
                     <ResponsiveContainer width="100%" height="100%">
-                         <BarChart data={branchPerformance} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F5F5F7" />
+                         <BarChart data={branchPerformance} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                            <defs>
+                                <linearGradient id="branchBarGradientDark" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stopColor="#38bdf8" />
+                                    <stop offset="100%" stopColor="#0ea5e9" />
+                                </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
                             <XAxis 
                                 dataKey="name_en" 
-                                tick={{ fontSize: 12, fill: '#86868b', fontWeight: 600, dy: 10 }} 
+                                tick={{ fontSize: 11, fill: '#9CA3AF', fontWeight: 600, dy: 10 }} 
                                 axisLine={false} 
                                 tickLine={false} 
                                 interval={0}
                             />
                             <RechartsTooltip 
-                                cursor={{ fill: 'rgba(0,0,0,0.02)', radius: 12 }}
-                                contentStyle={{ borderRadius: '16px', border: 'none', background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(20px)', boxShadow: '0 20px 40px rgba(0,0,0,0.1)' }}
-                                formatter={(val: number) => formatCurrency(val)}
+                                cursor={{ fill: 'rgba(255,255,255,0.05)', radius: 12 }}
+                                content={<CustomTooltip />}
                             />
-                            <Bar dataKey="value" fill="#1D1D1F" radius={[8, 8, 8, 8]} barSize={50} />
+                            <Bar dataKey="value" fill="url(#branchBarGradientDark)" radius={[8, 8, 8, 8]} barSize={40} animationDuration={1500} />
                          </BarChart>
                     </ResponsiveContainer>
                 </div>
             </BentoCard>
 
             {/* 5. Allocation */}
-            <BentoCard title="Cost Allocation" className="min-h-[400px]">
-                <div className="flex flex-col md:flex-row items-center gap-12 h-full">
-                    <div className="relative w-full md:w-1/2 h-[300px]">
+            <BentoCard dark title="Cost Allocation" className="min-h-[450px]">
+                {/* Background Mesh */}
+                <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-pink-500/10 blur-[100px] pointer-events-none rounded-full"></div>
+                <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-indigo-500/10 blur-[100px] pointer-events-none rounded-full"></div>
+
+                <div className="relative z-10 flex flex-col md:flex-row items-center gap-12 h-full">
+                    <div className="relative w-full md:w-1/2 h-[350px]">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
-                                    data={spendBreakdown}
+                                    data={darkSpendBreakdown}
                                     cx="50%"
                                     cy="50%"
-                                    innerRadius={80}
-                                    outerRadius={110}
-                                    paddingAngle={5}
+                                    innerRadius={90}
+                                    outerRadius={125}
+                                    paddingAngle={3}
                                     dataKey="value"
-                                    stroke="none"
+                                    stroke="#1D1D1F"
+                                    strokeWidth={4}
                                 >
-                                    {spendBreakdown.map((entry, index) => (
+                                    {darkSpendBreakdown.map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={entry.color} />
                                     ))}
                                 </Pie>
-                                <RechartsTooltip 
-                                    formatter={(val: number) => formatCurrency(val)}
-                                    contentStyle={{ borderRadius: '16px', border: 'none', background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(20px)', boxShadow: '0 20px 40px rgba(0,0,0,0.1)' }}
-                                />
+                                <RechartsTooltip content={<CustomTooltip />} />
                             </PieChart>
                         </ResponsiveContainer>
                         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                            <span className="text-3xl font-bold text-[#1D1D1F]">{formatCurrency(financials.marketingSpend)}</span>
+                            <span className="text-3xl font-bold text-white tracking-tight">{formatCurrency(financials.marketingSpend)}</span>
                             <span className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Total Spend</span>
                         </div>
                     </div>
                     
                     <div className="w-full md:w-1/2">
                         <div className="space-y-4 mb-8">
-                            {spendBreakdown.map((item, idx) => (
-                                <div key={idx} className="flex justify-between items-center p-3 rounded-xl hover:bg-gray-50 transition-colors">
+                            {darkSpendBreakdown.map((item, idx) => (
+                                <div key={idx} className="flex justify-between items-center p-3 rounded-xl hover:bg-white/5 transition-colors cursor-default group border border-transparent hover:border-white/5">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: item.color }}></div>
-                                        <span className="text-gray-600 font-semibold text-base">{item.name_en}</span>
+                                        <div className="w-3 h-3 rounded-full shadow-[0_0_10px_rgba(255,255,255,0.2)]" style={{ backgroundColor: item.color }}></div>
+                                        <span className="text-gray-300 font-semibold text-base group-hover:text-white transition-colors">{item.name_en}</span>
                                     </div>
-                                    <span className="font-bold text-[#1D1D1F] text-lg">{formatCurrency(item.value)}</span>
+                                    <span className="font-bold text-white text-lg">{formatCurrency(item.value)}</span>
                                 </div>
                             ))}
                         </div>
-                        <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
-                            <p className="text-xs text-gray-500 leading-relaxed font-medium">
-                                <span className="font-bold text-[#1D1D1F] uppercase tracking-wide mr-2">Reconciliation Note</span> 
+                        <div className="bg-white/5 rounded-2xl p-6 border border-white/10 backdrop-blur-sm">
+                            <p className="text-xs text-gray-400 leading-relaxed font-medium">
+                                <span className="font-bold text-white uppercase tracking-wide mr-2">Reconciliation Note</span> 
                                 Total Marketing Spend per Finance records is SAR 28,000. The displayed figure (SAR 21,347) reflects direct allocation; the difference aligns with ~31% VAT and fees (Meta & TikTok) applied at source.
                             </p>
                         </div>
